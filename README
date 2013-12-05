@@ -40,10 +40,10 @@ here, but the timestamps reported are still going to be correct.
 So far as I know, it can be run multiple times on the same machine, so each 
 competitor can run their own copy to monitor the problems they're working on.
 
-If it crashes, first check that your tcpdump version is 4.4.0 and you're 
-running tcpdump with *exactly* the arguments I put up there. I have it very 
-fine-tuned to the specific output format, and if even a single byte gets off 
-for some parts, it's going to crash and burn. If it's still crashing, send me 
-the output of the crash while it's running with -d.
+If it crashes, first check that your tcpdump version is 4.2.1 OR 4.4.0 and 
+you're running tcpdump with *exactly* the arguments I put up there. I have it 
+very fine-tuned to the specific output format, and if even a single byte gets 
+off for some parts, it's going to crash and burn. If it's still crashing, send 
+me the output of the crash while it's running with -d.
 
 Lastly, you're welcome.

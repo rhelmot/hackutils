@@ -20,13 +20,7 @@ class Packet:
 			linecomp = line.split(' ')
 			times = map(int, linecomp[0].split('.')[0].split(':'))
 			self.time = datetime.time(hour=times[0], minute=times[1], second=times[2])
-			lenstart = line.index('length ') + 7
-			lenend = []
-			lenend.append(line.find(')', lenstart))
-			lenend.append(line.find(',', lenstart))
-			lenend.append(line.find(' ', lenstart))
-			lenend = minset(lenend)
-			self.datalength = int(line[lenstart:lenend])
+			self.datalength = getlen(line)
 			baseproto = linecomp[1] if not ':' in linecomp[1] else linecomp[2]
 			if baseproto == 'IP':
 				protostart = line.index('proto ') + 6
@@ -47,7 +41,7 @@ class Packet:
 				self.matches = filter(lambda x: tflist[x[0]], enumerate(config[1]))
 			self.ident = ('.'.join(sourceid[:4]), 0 if noport else int(sourceid[4]), '.'.join(destid[:4]), 0 if noport else int(destid[4]), self.time)
 			if 'length' in line:
-				self.streamlength = int(line[line.rfind(' ')+1:])
+				self.streamlength = getlen(line)
 		elif self.state == 2:
 			if self.recvdlength == 0 and not '0x0000' in line:
 				return
@@ -66,7 +60,12 @@ class Packet:
 					print 'now at',self.recvdlength,'bytes'
 			if self.recvdlength >= self.datalength:
 				self.state = 3
-				self.appdata = self.streamdata[-self.streamlength:] if self.streamlength else self.streamdata
+				if self.streamlength is not None:
+					self.appdata = self.streamdata[-self.streamlength:]
+				else:
+					self.appdata = self.streamdata
+					if self.debug:
+						print 'Could not determine application-layer data'
 				return True
 
 
@@ -75,18 +74,24 @@ class Packet:
 		if self.debug:
 			print 'finished packet:'
 			print self.streamdata
+			print 'Appdata:'
+			print self.appdata
+			print 'Checking against',map(lambda x: x[1].pattern, self.matches)
 		for fil in self.matches:
 			if fil[1].search(self.streamdata):
-				print '--------------------- Match Found ----------------------'
+				print '---------------------- Match Found ----------------------'
 				print 'Rule ' + str(fil[0]) + ', port ' + config[0][fil[0]] + ', ' + fil[1].pattern
 				print self.ident
 				print '\n'.join(self.raw_lines)
+				print '\nApplication-layer data:'
+				print self.appdata
+				print '----------------------- Match End -----------------------'
 	
 	def clear(self):
 		self.state = 0
 		self.datalength = 0
 		self.recvdlength = 0
-		self.streamlength = 0
+		self.streamlength = None
 		self.time = None
 		self.ident = None
 		self.protocol = None
@@ -101,6 +106,15 @@ def minset(*args):
 		return min(filter(lambda x: x != -1, *args))
 	except:
 		return None
+
+def getlen(line):
+	lenstart = line.index('length ') + 7
+	lenend = []
+	lenend.append(line.find(')', lenstart))
+	lenend.append(line.find(',', lenstart))
+	lenend.append(line.find(' ', lenstart))
+	lenend = minset(lenend)
+	return int(line[lenstart:lenend])
 
 try:
 	config = open(sys.argv[1]).read().split('\n')
