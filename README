@@ -1,0 +1,49 @@
+This is just a fun little program I wrote up in literally 6 hours straight 
+because I'm awesome. You can use it to monitor tcpdump for whatever traffic 
+you're looking for via regexes or python. Run it EXACTLY like so:
+
+tcpdump -i <interface> -nSv -X | python tcpread.py [options]
+
+The first option is gonna be a config file describing the ports you're 
+watching and what to look for on them. It might look a bit like this:
+
+#config file for stage 2
+
+#service 1
+	3000:(admin|user)\x00\x00
+	3000:password
+
+#service 2
+	4567:multicheck.py
+	4568:\\r\\n\x00
+
+#generic check for escaping flags
+*:(key\{|flag\{)
+
+
+You can also specify the -d option for super-verbose debugging output.
+
+If you're using that pythonfile option, the file will be imported as a module 
+and its main() function will be used as the search function-- the application-
+layer data will be passed to it as an argument, and it should return true or 
+false for match or no match. You can also set the module variable 
+"description" to give a description to the process, which can be used later.
+
+When it finds a match, it will print to standard out a bunch of information 
+about the connection, beginning with a big obnoxious header followed by the 
+identification information requested by the iCTF people to flag the connection 
+if you decide it's not a false-positive.
+
+I've had some latencies of up to ten seconds in terms of data sent to reported 
+here, but the timestamps reported are still going to be correct.
+
+So far as I know, it can be run multiple times on the same machine, so each 
+competitor can run their own copy to monitor the problems they're working on.
+
+If it crashes, first check that your tcpdump version is 4.4.0 and you're 
+running tcpdump with *exactly* the arguments I put up there. I have it very 
+fine-tuned to the specific output format, and if even a single byte gets off 
+for some parts, it's going to crash and burn. If it's still crashing, send me 
+the output of the crash while it's running with -d.
+
+Lastly, you're welcome.
